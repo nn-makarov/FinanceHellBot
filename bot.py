@@ -80,6 +80,7 @@ async def get_settings_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📝 Редактировать категории")],
+            [KeyboardButton(text="🧹 Очистить статистику")],  
             [KeyboardButton(text="📤 Экспорт данных")],
             [KeyboardButton(text="⬅️ Назад в меню")]
         ],
@@ -205,6 +206,7 @@ async def handle_stats(message: Message):
             reply_markup=reply_markup
         )
 
+
 # ----- НАСТРОЙКИ -----
 @dp.message(F.text == "⚙️ Настройки")
 async def handle_settings(message: Message):
@@ -215,6 +217,53 @@ async def handle_settings(message: Message):
         "⚙️ *Настройки*\n\n"
         "Что хочешь настроить?",
         parse_mode=ParseMode.MARKDOWN,
+        reply_markup=await get_settings_keyboard()
+    )
+
+
+@dp.message(F.text == "🧹 Очистить статистику")
+async def handle_clear_stats(message: Message):
+    """Очистка статистики с подтверждением"""
+    
+    # Клавиатура для подтверждения
+    confirm_keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="✅ Да, удалить всю статистику")],
+            [KeyboardButton(text="❌ Нет, отменить")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    
+    await message.answer(
+        "⚠️ *Внимание!* Это удалит ВСЮ историю расходов.\n\n"
+        "Категории останутся, но все записи о расходах будут удалены.\n"
+        "Это действие нельзя отменить!\n\n"
+        "Продолжить?",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=confirm_keyboard
+    )
+
+@dp.message(F.text == "✅ Да, удалить всю статистику")
+async def handle_clear_confirm(message: Message):
+    """Подтверждение очистки статистики"""
+    user_id = message.from_user.id
+    
+    deleted_count = db.clear_user_statistics(user_id)
+    
+    await message.answer(
+        f"✅ Статистика очищена!\n"
+        f"Удалено записей: *{deleted_count}*\n\n"
+        f"Категории сохранены. Можно начать вести учёт заново!",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=await get_settings_keyboard()
+    )
+
+@dp.message(F.text == "❌ Нет, отменить")
+async def handle_clear_cancel(message: Message):
+    """Отмена очистки"""
+    await message.answer(
+        "Очистка отменена ✅",
         reply_markup=await get_settings_keyboard()
     )
 

@@ -138,3 +138,17 @@ class Database:
 
     def close(self):
         self.conn.close()
+
+    def clear_user_statistics(self, user_id):
+        """Полностью очищает статистику пользователя"""
+        self.cursor.execute("DELETE FROM expenses WHERE user_id = ?", (user_id,))
+        self.conn.commit()
+        return self.cursor.rowcount  
+
+    def clear_category_statistics(self, user_id, category_id):
+        """Очищает статистику по конкретной категории"""
+        self.cursor.execute(
+        "DELETE FROM expenses WHERE user_id = ? AND category_id = ?",
+        (user_id, category_id))
+        self.conn.commit()
+        return self.cursor.rowcount
